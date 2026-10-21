@@ -166,8 +166,17 @@
 
     mount() {
       const v = $('#view-timeline');
-      v.innerHTML = `<div class="tl-wrap"><div id="tl-notice"></div><div class="tl-scroll card" id="tl-scroll"></div></div>`;
+      v.innerHTML = `<div class="tl-wrap"><div id="tl-notice"></div>
+        <div class="tl-frame" id="tl-frame">
+          <div class="tl-scroll card" id="tl-scroll"></div>
+          <button class="tl-nav prev" data-nav="-1" title="Einen Monat zurück (Umschalt+←)" aria-label="Einen Monat zurück">${icon('chevron-left')}</button>
+          <button class="tl-nav next" data-nav="1" title="Einen Monat weiter (Umschalt+→)" aria-label="Einen Monat weiter">${icon('chevron-right')}</button>
+        </div></div>`;
       this.scroll = $('#tl-scroll');
+      $('#tl-frame').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-nav]');
+        if (b) this.scrollByMonths(+b.dataset.nav);
+      });
       $('#tl-notice').addEventListener('click', (e) => {
         if (e.target.closest('[data-dismiss-hint]')) S.setPref('hintDismissed', true);
       });
@@ -181,15 +190,46 @@
       sc.addEventListener('contextmenu', (e) => this.onContext(e));
       sc.addEventListener('keydown', (e) => this.onKey(e));
       sc.addEventListener('click', (e) => this.onClick(e));
+      sc.addEventListener('scroll', () => this.updateNav(), { passive: true });
       sc.addEventListener(
         'wheel',
         (e) => {
-          if (!(e.ctrlKey || e.metaKey)) return;
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            this.zoomAt(this.col() * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX);
+            return;
+          }
+          // Mausrad scrollt horizontal, solange nicht vertikal gescrollt werden muss
+          // (oder über Kopf- und Besetzungszeile); Umschalt+Rad und Touchpad funktionieren nativ.
+          if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+          const needsV = sc.scrollHeight > sc.clientHeight + 1;
+          if (needsV && !e.target.closest('.tl-head, .tl-cov')) return;
+          if (sc.scrollWidth <= sc.clientWidth) return;
           e.preventDefault();
-          this.zoomAt(S.prefs.zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX);
+          sc.scrollLeft += e.deltaY * (e.deltaMode === 1 ? 32 : e.deltaMode === 2 ? sc.clientWidth : 1);
         },
         { passive: false }
       );
+    },
+
+    /** Pfeil-Schaltflächen und Randschatten je nach Scrollposition */
+    updateNav() {
+      const sc = this.scroll, fr = $('#tl-frame');
+      if (!sc || !fr) return;
+      const max = sc.scrollWidth - sc.clientWidth;
+      fr.classList.toggle('can-left', max > 4 && sc.scrollLeft > 4);
+      fr.classList.toggle('can-right', max > 4 && sc.scrollLeft < max - 4);
+    },
+    scrollByDays(n) {
+      this.scroll.scrollBy({ left: n * this.col(), behavior: 'smooth' });
+    },
+    /** Zum Anfang des vorigen/nächsten Monats */
+    scrollByMonths(dir) {
+      const Y = H.year();
+      const first = Math.floor(this.scroll.scrollLeft / this.col() + 0.5);
+      const starts = Y.months.map((m) => m.start);
+      const target = dir > 0 ? starts.find((s) => s > first + 1) : [...starts].reverse().find((s) => s < first - 1);
+      this.scrollToIdx(target != null ? target : dir > 0 ? Y.n : 0);
     },
 
     col() {
@@ -385,6 +425,7 @@
         sc.scrollLeft = prevLeft;
         sc.scrollTop = prevTop;
       }
+      this.updateNav();
       this.hoverIdx = -1;
       if (this.focusAbs) {
         const b = sc.querySelector(`.bar[data-abs="${CSS.escape(this.focusAbs)}"]`);
@@ -466,6 +507,16 @@
       this.pendingScroll = 0;
       S.setPrefs({ fit: true });
     },
+    /** „Ganzes Jahr“ ein-/ausschalten; beim Ausschalten tageweise ab heute */
+    toggleFit() {
+      if (!S.prefs.fit) return this.fitYear();
+      const Y = H.year();
+      const t = D.today();
+      const i = t.startsWith(String(Y.y)) ? D.diff(Y.start, t) - 10 : 0;
+      const z = S.prefs.zoom >= 14 ? S.prefs.zoom : 28;
+      this.pendingScroll = Math.max(0, i * z);
+      S.setPrefs({ fit: false, zoom: z });
+    },
     /** Monat formatfüllend anzeigen */
     zoomMonth(m) {
       const Y = H.year();
@@ -528,6 +579,14 @@
     },
 
     onDown(e) {
+      // Mittlere Maustaste überall bzw. linke Maustaste auf Kopf- und Besetzungszeile: Ansicht verschieben
+      const panZone = e.target.closest('.tl-headdays, .tl-cov .tl-lane');
+      if ((e.button === 1 || (e.button === 0 && panZone)) && e.pointerType !== 'touch') {
+        if (this.scroll.scrollWidth <= this.scroll.clientWidth) return;
+        e.preventDefault();
+        this.drag = { kind: 'pan', x0: e.clientX, left0: this.scroll.scrollLeft, moved: false, pid: e.pointerId };
+        return;
+      }
       if (e.button !== 0) return;
       const lane = e.target.closest('.tl-lane[data-emp]');
       if (!lane) return;
@@ -583,6 +642,18 @@
         const inBody = !!e.target.closest('.tl-body, .tl-cov');
         if (!inBody || e.clientX - r.left < this.nameW()) this.setHover(-1);
         else this.setHover(clamp(Math.floor(x / this.col()), 0, H.year().n - 1));
+        return;
+      }
+      if (dr.kind === 'pan') {
+        const dx = e.clientX - dr.x0;
+        if (!dr.moved && Math.abs(dx) < 4) return;
+        if (!dr.moved) {
+          dr.moved = true;
+          this.scroll.setPointerCapture(dr.pid);
+          document.body.classList.add('panning');
+          UP.ui.tip.hide();
+        }
+        this.scroll.scrollLeft = dr.left0 - dx;
         return;
       }
       if (dr.touch) {
@@ -648,6 +719,11 @@
       UP.ui.tip.el.classList.remove('show');
       if (dr.sel) dr.sel.remove();
 
+      if (dr.kind === 'pan') {
+        document.body.classList.remove('panning');
+        if (dr.moved) this.suppressClick = true;
+        return;
+      }
       if (dr.kind === 'select') {
         const Y = H.year();
         if (dr.touch) {
@@ -719,7 +795,7 @@
       if (!this.drag) return;
       const dr = this.drag;
       this.drag = null;
-      document.body.classList.remove('dragging');
+      document.body.classList.remove('dragging', 'panning');
       UP.ui.tip.el.classList.remove('show');
       if (dr.sel) dr.sel.remove();
       if (dr.kind === 'bar' && dr.moved) this.render();

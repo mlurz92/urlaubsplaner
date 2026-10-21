@@ -1,6 +1,6 @@
 # Urlaubsplaner · Jahresplanung Sachsen
 
-Webanwendung zur Planung des Jahresurlaubs aller Mitarbeitenden – mit **gesetzlichen Feiertagen** und **Schulferien in Sachsen**, Besetzungskontrolle, Urlaubskonten und Antragsworkflow. Klare, aufgeräumte Oberfläche im Aero-Milchglas-Design mit einem 3D-WebGL-Hintergrund, 3D-Seitenübergängen und hellem und dunklem Farbschema.
+Webanwendung zur Planung des Jahresurlaubs aller Mitarbeitenden – mit **gesetzlichen Feiertagen** und **Schulferien in Sachsen**, Besetzungskontrolle, Urlaubskonten und Antragsworkflow. Klare, aufgeräumte Oberfläche im Aero-Milchglas-Design mit 3D-Seitenübergängen und hellem und dunklem Farbschema.
 
 Die App ist rein statisch (HTML/CSS/JavaScript, ohne Build-Schritt und ohne Server) und läuft direkt im Browser. Über einen Webserver ausgeliefert, ist sie zusätzlich installierbar und offline nutzbar (PWA).
 
@@ -17,7 +17,7 @@ Optional als lokaler Webserver: `npx serve .` und dann `http://localhost:3000` a
 
 | Ansicht | Inhalt |
 |---|---|
-| **Übersicht** (Standard) | Alle Mitarbeitenden als Zeilen über das **ganze Jahr auf einen Blick**, nach Gruppen gegliedert. Wochenenden, Feiertage (rot), Schulferien (gelb), Brückentage (grün), Urlaubssperren (schraffiert) und die Linie für „Heute“ sind farbig hinterlegt. Am unteren Rand steht je Gruppe die tägliche Anzahl Anwesender, Unterschreitungen der Mindestbesetzung sind rot markiert. |
+| **Übersicht** (Standard) | Alle Mitarbeitenden als Zeilen untereinander, nach Gruppen gegliedert – tageweise und **horizontal durch das Jahr scrollbar**, auf Knopfdruck auch als **ganzes Jahr auf einen Blick**. Wochenenden, Feiertage (rot), Schulferien (gelb), Brückentage (grün), Urlaubssperren (schraffiert) und die Linie für „Heute“ sind farbig hinterlegt. Am unteren Rand steht je Gruppe die tägliche Anzahl Anwesender, Unterschreitungen der Mindestbesetzung sind rot markiert. |
 | **Kalender** | Klassischer 12-Monats-Jahreskalender mit Kalenderwochen. Für „Alle“ steht an jedem Tag die Anzahl Abwesender, für eine einzelne Person ihre Einträge. Seitenleiste mit Feiertagen, Schulferien, Brückentagen sowie Sperrzeiten und Terminen. |
 | **Auswertung** | Kennzahlen, Urlaubskonten je Person (Anspruch, Übertrag, genehmigt, beantragt, geplant, Rest), Engpassliste, Monatsdiagramm und eine Liste aller Einträge mit „Genehmigen“ (einzeln oder alle). |
 
@@ -29,7 +29,8 @@ Optional als lokaler Webserver: `npx serve .` und dann `http://localhost:3000` a
 - **Dialog mit Live-Prüfung:** Arbeitstage, Kalendertage, enthaltene Feiertage, Resturlaub vorher und nachher, Warnung bei Unterschreitung der Mindestbesetzung, bei Urlaubssperren und bei überzogenem Anspruch. Zusätzlich Hinweis, wer im selben Zeitraum abwesend ist und welche Schulferien betroffen sind. Schnellwahl für 1 Tag, bis Freitag, 2 oder 3 Wochen. Halbe Tage sind möglich.
 - **Status:** *Geplant* (umrandet), *Beantragt* (schraffiert), *Genehmigt* (vollflächig).
 - **Rückgängig/Wiederholen** für alle Datenänderungen (`Strg+Z` / `Strg+Y`), dazu Rückgängig-Knopf in jeder Bestätigung.
-- **Zoom:** „Ganzes Jahr“ (Taste `G`), Klick auf einen Monat zoomt hinein, `Strg`+Mausrad, Schieberegler, `+`/`−`.
+- **Horizontal scrollen:** Mausrad (über der Übersicht scrollt es seitwärts), `Umschalt`+Mausrad, Touchpad-Wischen, Scrollleiste, Ziehen an der Kopfzeile (Monate/Tage) oder mit gedrückter mittlerer Maustaste, Pfeil-Schaltflächen am Rand (ein Monat) sowie Tasten `←`/`→` (eine Woche), `Umschalt`+`←`/`→` bzw. `Bild↑`/`Bild↓` (ein Monat), `Pos1`/`Ende` (Jahresanfang/-ende). Randschatten zeigen, dass es links oder rechts weitergeht.
+- **Zoom:** „Ganzes Jahr“ ein/aus (Taste `G`), Klick auf einen Monat springt dorthin (im Ganzjahresmodus: hineinzoomen), `Strg`+Mausrad, Schieberegler, `+`/`−`.
 - **Filter:** nach Gruppe (FA/AÄ) oder Name (über die Befehlspalette); Gruppen lassen sich auf- und zuklappen.
 
 ### Befehlspalette (`Strg+K` / `⌘K`)
@@ -55,11 +56,11 @@ Region und Zählregeln, Standard-Status neuer Einträge, Schnellerfassung ohne D
 
 ### Design, 3D und Animationen
 
-- **3D-Hintergrund (WebGL, three.js):** schwebende Glaskörper mit Glanzlichtern, die dem Mauszeiger per Parallaxe folgen und beim Jahres- oder Ansichtswechsel einen „Warp“-Impuls erhalten. Die Datenflächen bestehen aus fast deckendem Milchglas; die 3D-Szene bleibt dahinter ein dezenter Farbschimmer und stört die Übersicht nicht.
+- **Ruhiger Hintergrund:** sanft fließender Farbverlauf hinter fast deckendem Milchglas – ohne störende Formen.
 - **3D-Seitenübergänge (View-Transitions-API):** Ansichtswechsel als rotierender **3D-Würfel**, Jahreswechsel als **umgeblättertes Kalenderblatt**, Wechsel des Farbschemas als **kreisförmige Enthüllung** vom Schalter aus.
 - **Eintritts-Choreografie:** Mitarbeitendenzeilen klappen wie eine Fallblattanzeige auf, Abwesenheitsbalken fliegen als Welle von links nach rechts ein, Monatskarten im Kalender werden wie ein Kartenspiel ausgeteilt, Kennzahlen kippen ein und Diagrammbalken wachsen.
 - **Interaktion:** Gezogene Balken heben sich in 3D an, neue Einträge erscheinen mit einem 3D-Effekt, genehmigte Einträge drehen sich einmal um die eigene Achse, dazu Konfetti. Kalenderkarten neigen sich unter dem Mauszeiger.
-- **Abschaltbar** unter Einstellungen → Darstellung. Bei aktivierter Systemeinstellung „Bewegung reduzieren“ entfallen alle Animationen automatisch. Der 3D-Hintergrund pausiert in inaktiven Tabs und beim Ziehen.
+- **Abschaltbar** unter Einstellungen → Darstellung. Bei aktivierter Systemeinstellung „Bewegung reduzieren“ entfallen alle Animationen automatisch.
 
 ### Mitarbeitende
 
@@ -84,7 +85,9 @@ Anlegen, bearbeiten, sortieren, deaktivieren und löschen. Voreingestellt sind d
 | Rückgängig / Wiederholen | `Strg+Z` / `Strg+Y` |
 | Vorjahr / Folgejahr | `Alt+←` / `Alt+→` |
 | Heute | `T` |
-| Ganzes Jahr einpassen | `G` |
+| Ganzes Jahr ein/aus | `G` |
+| Übersicht scrollen: Woche / Monat | `←` `→` / `Umschalt+←` `→`, `Bild↑` `Bild↓` |
+| Jahresanfang / -ende | `Pos1` / `Ende` |
 | Ansicht Übersicht / Kalender / Auswertung | `Z` / `K` / `A` |
 | Abwesenheitsart wählen | `1`–`9` |
 | Zoom | `+` / `−`, `Strg`+Mausrad |
@@ -116,12 +119,11 @@ assets/js/ui.js         Tooltips, Kontextmenü, Dialoge, Toasts, Downloads
 assets/js/views.js      Übersicht (Zeitstrahl), Jahreskalender, Auswertung
 assets/js/dialogs.js    Eintrags-, Personen-, Einstellungs- und Hilfedialoge, Import/Export/Druck
 assets/js/palette.js    Befehlspalette (Strg+K)
-assets/js/scene3d.js    3D-Hintergrund (three.js/WebGL)
 assets/js/app.js        Steuerung, Seitenübergänge, Werkzeugleiste, Legende, Tastatur, Effekte
 Mitarbeitende.txt       Ursprüngliche Mitarbeitendenliste
 ```
 
-- Kein Build-Schritt, kein Framework. Optional über CDN: [three.js](https://threejs.org) r128 für den 3D-Hintergrund, Schriftart *Inter* (Google Fonts) und [canvas-confetti](https://github.com/catdad/canvas-confetti) für den Konfetti-Effekt. Alle drei werden asynchron geladen; ohne Internet bleibt die App voll funktionsfähig (CSS-Hintergrund, Systemschrift, kein Konfetti).
+- Kein Build-Schritt, kein Framework. Optional über CDN: Schriftart *Inter* (Google Fonts) und [canvas-confetti](https://github.com/catdad/canvas-confetti) für den Konfetti-Effekt. Beides wird asynchron geladen; ohne Internet bleibt die App voll funktionsfähig (Systemschrift, kein Konfetti).
 - Moderne Browser-APIs mit Rückfallebene: View-Transitions-API (Chrome/Edge 111+, Safari 18+; sonst einfache Überblendung), `backdrop-filter`, `color-mix()`, `:has()`, natives `<dialog>`, Service Worker.
 - Barrierearm: per Tastatur bedienbar, ARIA-Rollen, sichtbarer Fokus. `prefers-reduced-motion` wird berücksichtigt, und Animationen lassen sich abschalten.
 - Responsive bis Smartphone-Breite; auf Touch-Geräten öffnet ein Tippen auf einen Tag den Eintragsdialog.

@@ -78,7 +78,6 @@
      */
     transition(kind, update, origin) {
       const root = document.documentElement;
-      if (UP.scene3d && UP.scene3d.started && kind !== 'theme') UP.scene3d.pulse(/prev|back/.test(kind) ? -1 : 1, kind.startsWith('year') ? 1.3 : 0.7);
       if (!fx.on || typeof document.startViewTransition !== 'function' || document.querySelector('dialog[open]') || fx.vt) {
         update();
         return;
@@ -133,8 +132,6 @@
       this.bindKeys();
       S.subscribe((kind) => this.render(kind));
       this.render('init');
-      this.ready = true;
-      if (UP.scene3d) UP.scene3d.init();
       this.registerSW();
       window.addEventListener('resize', () => {
         clearTimeout(this._rs);
@@ -147,7 +144,6 @@
       const p = S.prefs;
       if (!VIEWS.includes(p.view)) p.view = 'timeline';
       fx.apply();
-      if (this.ready && fx.on && UP.scene3d) UP.scene3d.init();
       document.documentElement.dataset.density = p.density;
       this.renderTopbar();
       this.renderToolbar();
@@ -321,7 +317,7 @@
         case 'zoom-out':
           return UP.timeline.zoomAt(UP.timeline.col() / 1.35);
         case 'fit':
-          return UP.timeline.fitYear();
+          return UP.timeline.toggleFit();
         case 'print':
           return UP.io.print();
         case 'csv-stats':
@@ -382,7 +378,7 @@
           <div class="zoom"><button class="btn sm ghost icon-only" data-action="zoom-out" title="Verkleinern (−)">${icon('minus', 'sm')}</button>
             <input type="range" id="zoom" min="3" max="64" step="0.5" aria-label="Zoom">
             <button class="btn sm ghost icon-only" data-action="zoom-in" title="Vergrößern (+)">${icon('plus', 'sm')}</button>
-            <button class="btn sm ${p.fit ? 'active' : ''}" data-action="fit" aria-pressed="${!!p.fit}" title="Alle Mitarbeitenden über das ganze Jahr auf einen Blick (G)">${icon('fit', 'sm')}Ganzes Jahr</button></div>`;
+            <button class="btn sm" data-action="fit" aria-pressed="${!!p.fit}" title="${p.fit ? 'Zurück zur Tagesansicht mit horizontalem Scrollen (G)' : 'Alle Mitarbeitenden über das ganze Jahr auf einen Blick (G)'}">${icon('fit', 'sm')}Ganzes Jahr</button></div>`;
       } else if (p.view === 'calendar') {
         const opts = `<option value="all" ${p.calPerson === 'all' ? 'selected' : ''}>Alle Mitarbeitenden (Anzahl Abwesender)</option>` +
           d.groups.map((g) => `<optgroup label="${esc(g.name)}">${d.employees.filter((e) => e.group === g.id && (e.active || p.showInactive)).map((e) => `<option value="${esc(e.id)}" ${p.calPerson === e.id ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</optgroup>`).join('');
@@ -490,6 +486,22 @@
         }
         if (mod || e.altKey) return;
         const k = e.key;
+        // Übersicht horizontal scrollen: ←/→ eine Woche, Umschalt eine Monat, Bild↑/↓ Monat, Pos1/Ende
+        if (S.prefs.view === 'timeline' && !e.defaultPrevented && !(e.target.closest && e.target.closest('.bar'))) {
+          const T = UP.timeline;
+          const nav = {
+            ArrowLeft: () => (e.shiftKey ? T.scrollByMonths(-1) : T.scrollByDays(-7)),
+            ArrowRight: () => (e.shiftKey ? T.scrollByMonths(1) : T.scrollByDays(7)),
+            PageUp: () => T.scrollByMonths(-1),
+            PageDown: () => T.scrollByMonths(1),
+            Home: () => T.scrollToIdx(0),
+            End: () => T.scrollToIdx(UP.viewHelpers.year().n)
+          }[k];
+          if (nav) {
+            e.preventDefault();
+            return nav();
+          }
+        }
         if (/^[1-9]$/.test(k)) {
           const t = S.data.types[+k - 1];
           if (t) {
@@ -501,7 +513,7 @@
         const map = {
           n: () => this.action('new-absence'),
           t: () => this.goToday(),
-          g: () => S.prefs.view === 'timeline' && UP.timeline.fitYear(),
+          g: () => S.prefs.view === 'timeline' && UP.timeline.toggleFit(),
           z: () => this.setView('timeline'),
           k: () => this.setView('calendar'),
           a: () => this.setView('stats'),

@@ -3579,19 +3579,6 @@ table.data th {
    v2 · Klare Werkzeugleiste, Befehlspalette, 3D-Übergänge (View Transitions)
    ========================================================================== */
 
-/* WebGL-Szene hinter der Oberfläche */
-.scene3d {
-  position: absolute;
-  inset: 0;
-  display: block;
-}
-.has-3d .aurora i {
-  opacity: 0.75;
-}
-[data-fx='off'] .scene3d {
-  display: none;
-}
-
 /* Befehlspalette in der Kopfzeile */
 .cmdk {
   display: inline-flex;
@@ -4220,13 +4207,8 @@ html.booting .brand-logo {
     display: none;
   }
 }
-@media print {
-  .scene3d {
-    display: none;
-  }
-}
 
-/* Datenflächen: nahezu deckendes Milchglas – der 3D-Hintergrund bleibt dezenter Schimmer */
+/* Datenflächen: nahezu deckendes Milchglas für ruhige Lesbarkeit */
 :root {
   --glass-data: rgba(255, 255, 255, 0.86);
 }
@@ -4277,4 +4259,126 @@ html.booting .brand-logo {
 /* Zeitstrahl-Karte nur so hoch wie ihr Inhalt */
 .tl-scroll {
   flex: 0 1 auto;
+}
+
+/* ==========================================================================
+   v3 · Horizontales Scrollen in der Übersicht
+   ========================================================================== */
+.tl-frame {
+  position: relative;
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tl-frame > .tl-scroll {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+/* Gut sichtbare, greifbare horizontale Scrollleiste */
+.tl-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: color-mix(in srgb, var(--primary) 45%, var(--border-strong)) transparent;
+}
+.tl-scroll::-webkit-scrollbar {
+  height: 14px;
+  width: 12px;
+}
+.tl-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--primary) 35%, var(--border-strong));
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 10px;
+}
+.tl-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+  background-clip: padding-box;
+}
+/* Kopfzeile lässt sich mit der Maus ziehen */
+.tl-headdays {
+  cursor: grab;
+}
+body.panning,
+body.panning * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+/* Randschatten zeigen, dass es links/rechts weitergeht */
+.tl-frame::before,
+.tl-frame::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  bottom: 15px;
+  width: 36px;
+  pointer-events: none;
+  z-index: 8;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.tl-frame::before {
+  left: calc(var(--namecol) + 1px);
+  background: linear-gradient(90deg, rgba(30, 50, 110, 0.12), transparent);
+}
+.tl-frame::after {
+  right: 1px;
+  border-radius: 0 var(--r-lg) 0 0;
+  background: linear-gradient(270deg, rgba(30, 50, 110, 0.12), transparent);
+}
+.tl-frame.can-left::before,
+.tl-frame.can-right::after {
+  opacity: 1;
+}
+/* Monats-Pfeile am Rand */
+.tl-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 9;
+  width: 38px;
+  height: 38px;
+  margin-top: -19px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(16px) saturate(170%);
+  backdrop-filter: blur(16px) saturate(170%);
+  color: var(--text);
+  box-shadow: 0 8px 22px rgba(30, 50, 110, 0.18), inset 0 1px 0 var(--glass-hi);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s, background 0.2s;
+}
+.tl-nav.prev {
+  left: calc(var(--namecol) + 10px);
+  transform: translateX(-6px);
+}
+.tl-nav.next {
+  right: 12px;
+  transform: translateX(6px);
+}
+.tl-frame.can-left:hover .tl-nav.prev,
+.tl-frame.can-right:hover .tl-nav.next,
+.tl-frame.can-left .tl-nav.prev:focus-visible,
+.tl-frame.can-right .tl-nav.next:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+.tl-nav:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+body.dragging .tl-nav,
+body.panning .tl-nav {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+@media (hover: none) {
+  .tl-nav {
+    display: none;
+  }
 }
