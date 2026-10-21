@@ -22,6 +22,7 @@
         xmasRule: 'voll',
         defaultEntitlement: 30,
         defaultStatus: 'geplant',
+        defaultType: 'urlaub',
         quickCreate: false,
         events: []
       },
@@ -261,6 +262,12 @@
     /* ---------------------------------------------------------- Abfragen */
     employee(id) {
       return data.employees.find((e) => e.id === id) || null;
+    },
+    /** Vorausgewählte Abwesenheitsart beim Markieren (Standard: Urlaub) */
+    defaultTypeId() {
+      const t = data.types;
+      const pick = t.find((x) => x.id === data.settings.defaultType) || t.find((x) => x.id === 'urlaub') || t.find((x) => x.counts) || t[0];
+      return pick.id;
     },
     type(id) {
       return data.types.find((t) => t.id === id) || data.types[0];
