@@ -534,19 +534,6 @@ kbd {
   overflow: auto;
   position: relative;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-.tl-scroll::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-.tl-scroll::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 10px;
-  border: 3px solid var(--surface);
-}
-.tl-scroll::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 .tl {
@@ -3097,10 +3084,6 @@ body {
 .tl-cov {
   box-shadow: 0 -8px 22px -12px rgba(30, 50, 110, 0.25);
 }
-.tl-scroll::-webkit-scrollbar-thumb {
-  border-color: transparent;
-  background-clip: padding-box;
-}
 
 /* Bedienelemente mit Glas-Look */
 .btn {
@@ -4275,25 +4258,6 @@ html.booting .brand-logo {
   flex: 0 1 auto;
   min-height: 0;
 }
-/* Gut sichtbare, greifbare horizontale Scrollleiste */
-.tl-scroll {
-  scrollbar-width: auto;
-  scrollbar-color: color-mix(in srgb, var(--primary) 45%, var(--border-strong)) transparent;
-}
-.tl-scroll::-webkit-scrollbar {
-  height: 14px;
-  width: 12px;
-}
-.tl-scroll::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--primary) 35%, var(--border-strong));
-  border: 3px solid transparent;
-  background-clip: padding-box;
-  border-radius: 10px;
-}
-.tl-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
-  background-clip: padding-box;
-}
 /* Kopfzeile lässt sich mit der Maus ziehen */
 .tl-headdays {
   cursor: grab;
@@ -4381,4 +4345,45 @@ body.panning .tl-nav {
   .tl-nav {
     display: none;
   }
+}
+
+/* ==========================================================================
+   Scrollleisten blenden sich automatisch aus
+   – sichtbar beim Scrollen und wenn der Zeiger an den Rand eines Bereichs fährt
+   ========================================================================== */
+:where(.tl-scroll, .cal-wrap, .st-wrap, .dlg-body, .settings .pane, .pal-list, .panel-body) {
+  --sb: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sb) transparent;
+  transition: scrollbar-color 0.35s;
+}
+.sb-show {
+  --sb: color-mix(in srgb, var(--primary) 45%, var(--border-strong));
+}
+/* Ältere WebKit-/Blink-Versionen ohne scrollbar-color */
+.tl-scroll::-webkit-scrollbar,
+.cal-wrap::-webkit-scrollbar,
+.st-wrap::-webkit-scrollbar,
+.dlg-body::-webkit-scrollbar,
+.settings .pane::-webkit-scrollbar,
+.pal-list::-webkit-scrollbar,
+.panel-body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+.tl-scroll::-webkit-scrollbar-thumb,
+.cal-wrap::-webkit-scrollbar-thumb,
+.st-wrap::-webkit-scrollbar-thumb,
+.dlg-body::-webkit-scrollbar-thumb,
+.settings .pane::-webkit-scrollbar-thumb,
+.pal-list::-webkit-scrollbar-thumb,
+.panel-body::-webkit-scrollbar-thumb {
+  background: var(--sb);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 10px;
+}
+.tl-scroll::-webkit-scrollbar-corner {
+  background: transparent;
 }

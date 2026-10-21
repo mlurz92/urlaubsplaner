@@ -23,13 +23,14 @@ Optional als lokaler Webserver: `npx serve .` und dann `http://localhost:3000` a
 
 ### Planen und bearbeiten
 
-- **Eintragen per Ziehen:** Abwesenheitsart wählen (Leiste oben oder Tasten `1`–`9`), dann in der Zeile einer Person über die gewünschten Tage ziehen. Im Kalender funktioniert das ebenso.
+- **Eintragen per Ziehen:** In der Zeile einer Person über die gewünschten Tage ziehen. Vorausgewählt ist beim Start immer **Urlaub**; eine andere Art (Leiste oben oder Tasten `1`–`9`) gilt bis zum nächsten Start. Die vorausgewählte Art lässt sich unter Einstellungen → Allgemein ändern. Im Kalender funktioniert das ebenso.
 - **Verschieben und verlängern:** Balken mit der Maus verschieben oder an den Rändern ziehen. Überschneidungen werden verhindert.
 - **Kontextmenü (Rechtsklick):** Bearbeiten, Duplizieren, Status und Art ändern, Löschen.
 - **Dialog mit Live-Prüfung:** Arbeitstage, Kalendertage, enthaltene Feiertage, Resturlaub vorher und nachher, Warnung bei Unterschreitung der Mindestbesetzung, bei Urlaubssperren und bei überzogenem Anspruch. Zusätzlich Hinweis, wer im selben Zeitraum abwesend ist und welche Schulferien betroffen sind. Schnellwahl für 1 Tag, bis Freitag, 2 oder 3 Wochen. Halbe Tage sind möglich.
 - **Status:** *Geplant* (umrandet), *Beantragt* (schraffiert), *Genehmigt* (vollflächig).
 - **Rückgängig/Wiederholen** für alle Datenänderungen (`Strg+Z` / `Strg+Y`), dazu Rückgängig-Knopf in jeder Bestätigung.
 - **Horizontal scrollen:** Mausrad (über der Übersicht scrollt es seitwärts), `Umschalt`+Mausrad, Touchpad-Wischen, Scrollleiste, Ziehen an der Kopfzeile (Monate/Tage) oder mit gedrückter mittlerer Maustaste, Pfeil-Schaltflächen am Rand (ein Monat) sowie Tasten `←`/`→` (eine Woche), `Umschalt`+`←`/`→` bzw. `Bild↑`/`Bild↓` (ein Monat), `Pos1`/`Ende` (Jahresanfang/-ende). Randschatten zeigen, dass es links oder rechts weitergeht.
+- **Unauffällige Scrollleisten:** Sie blenden sich automatisch aus und erscheinen nur beim Scrollen oder wenn der Mauszeiger an den unteren bzw. rechten Rand eines Bereichs fährt (zum Greifen).
 - **Zoom:** „Ganzes Jahr“ ein/aus (Taste `G`), Klick auf einen Monat springt dorthin (im Ganzjahresmodus: hineinzoomen), `Strg`+Mausrad, Schieberegler, `+`/`−`.
 - **Filter:** nach Gruppe (FA/AÄ) oder Name (über die Befehlspalette); Gruppen lassen sich auf- und zuklappen.
 
@@ -52,7 +53,7 @@ Ein Suchfeld für alles: Aktionen, Ansichten, Export, Einstellungen und Personen
 
 ### Einstellungen
 
-Region und Zählregeln, Standard-Status neuer Einträge, Schnellerfassung ohne Dialog, Farbschema (System/Hell/Dunkel), Zeilenhöhe, Einblendungen (Schulferien, Brückentage, KW, inaktive Personen), Animationen und 3D-Effekte, Gruppen mit **Mindestbesetzung**, frei definierbare **Abwesenheitsarten** (Name, Kürzel, Farbe, Anrechnung) sowie **Urlaubssperren und Termine**.
+Region und Zählregeln, vorausgewählte Art beim Markieren (Standard: Urlaub), Standard-Status neuer Einträge, Schnellerfassung ohne Dialog, Farbschema (System/Hell/Dunkel), Zeilenhöhe, Einblendungen (Schulferien, Brückentage, KW, inaktive Personen), Animationen und 3D-Effekte, Gruppen mit **Mindestbesetzung**, frei definierbare **Abwesenheitsarten** (Name, Kürzel, Farbe, Anrechnung) sowie **Urlaubssperren und Termine**.
 
 ### Design, 3D und Animationen
 

@@ -257,5 +257,35 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  UP.ui = { esc, icon, $, $$, initials, toast, tip, menu, openDialog, confirmDialog, download };
+  /* ------------------------------------------- Scrollleisten ausblenden */
+  const SB_SEL = '.tl-scroll, .cal-wrap, .st-wrap, .dlg-body, .settings .pane, .pal-list, .panel-body';
+  const autoHideScrollbars = {
+    timers: new WeakMap(),
+    init() {
+      // Beim Scrollen einblenden, kurz danach wieder ausblenden
+      document.addEventListener('scroll', (e) => this.show(e.target), { capture: true, passive: true });
+      // Zeiger nahe am rechten bzw. unteren Rand eines Scrollbereichs: Leiste zum Greifen einblenden
+      document.addEventListener(
+        'pointermove',
+        (e) => {
+          if (e.pointerType === 'touch' || e.buttons) return;
+          const el = e.target.closest && e.target.closest(SB_SEL);
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          const nearBottom = el.scrollWidth > el.clientWidth && e.clientY > r.bottom - 18;
+          const nearRight = el.scrollHeight > el.clientHeight && e.clientX > r.right - 18;
+          if (nearBottom || nearRight) this.show(el, 1600);
+        },
+        { passive: true }
+      );
+    },
+    show(el, ms = 1100) {
+      if (!el || el.nodeType !== 1 || !el.matches(SB_SEL)) return;
+      el.classList.add('sb-show');
+      clearTimeout(this.timers.get(el));
+      this.timers.set(el, setTimeout(() => el.classList.remove('sb-show'), ms));
+    }
+  };
+
+  UP.ui = { esc, icon, $, $$, initials, toast, tip, menu, openDialog, confirmDialog, download, autoHideScrollbars };
 })(window.UP = window.UP || {});

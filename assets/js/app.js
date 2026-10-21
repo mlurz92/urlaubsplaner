@@ -123,7 +123,10 @@
       document.documentElement.classList.add('booting');
       setTimeout(() => document.documentElement.classList.remove('booting'), 1800);
       S.init();
+      // Beim Start ist immer die Standard-Art (Urlaub) zum Markieren gewählt
+      S.prefs.brush = S.defaultTypeId();
       UP.ui.tip.init();
+      UP.ui.autoHideScrollbars.init();
       fx.apply();
       fx.initTilt();
       this.applyTheme();

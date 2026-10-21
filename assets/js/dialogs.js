@@ -467,7 +467,10 @@
             </div>
           </div>
           <div class="section"><div class="section-title">Eintragen</div>
-            <div class="form-grid" style="margin-bottom:6px"><div class="field"><label>Status neuer Einträge</label><select data-set="defaultStatus">${UP.STATUSES.map((x) => `<option value="${x.id}" ${s.defaultStatus === x.id ? 'selected' : ''}>${x.name}</option>`).join('')}</select></div></div>
+            <div class="form-grid" style="margin-bottom:6px">
+              <div class="field"><label>Vorausgewählte Art beim Markieren</label><select data-set="defaultType">${S.data.types.map((x) => `<option value="${esc(x.id)}" ${S.defaultTypeId() === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select><span class="hint">gilt bei jedem Start der App</span></div>
+              <div class="field"><label>Status neuer Einträge</label><select data-set="defaultStatus">${UP.STATUSES.map((x) => `<option value="${x.id}" ${s.defaultStatus === x.id ? 'selected' : ''}>${x.name}</option>`).join('')}</select></div>
+            </div>
             ${sw('quickCreate', s.quickCreate, 'Schnellerfassung', 'Markierte Zeiträume in der Übersicht sofort anlegen, ohne Dialog (mit Rückgängig-Option)')}
           </div>`;
       },
@@ -611,7 +614,7 @@
                 d.types = d.types.filter((x) => x.id !== t.id);
                 d.absences.forEach((a) => a.typeId === t.id && (a.typeId = fallback));
               });
-              if (S.prefs.brush === t.id) S.setPref('brush', S.data.types[0].id);
+              if (S.prefs.brush === t.id) S.setPref('brush', S.defaultTypeId());
             });
           }
           if (b.hasAttribute('data-evadd')) {
@@ -633,6 +636,7 @@
             const k = t.dataset.set;
             const v = t.type === 'number' ? +t.value : t.value;
             S.commit('Einstellung geändert', (d) => (d.settings[k] = v));
+            if (k === 'defaultType') S.setPref('brush', v);
             return;
           }
           const k = t.dataset.k;
