@@ -72,9 +72,39 @@
         requestAnimationFrame(step);
       });
     },
-    /** Eintritts-Animation einer Ansicht */
+    /**
+     * Seitenübergang über die View-Transitions-API:
+     * year-next/-prev (Kalenderblatt), view-fwd/-back (3D-Würfel), theme (Kreis-Enthüllung).
+     */
+    transition(kind, update, origin) {
+      const root = document.documentElement;
+      if (UP.scene3d && UP.scene3d.started && kind !== 'theme') UP.scene3d.pulse(/prev|back/.test(kind) ? -1 : 1, kind.startsWith('year') ? 1.3 : 0.7);
+      if (!fx.on || typeof document.startViewTransition !== 'function' || document.querySelector('dialog[open]') || fx.vt) {
+        update();
+        return;
+      }
+      root.dataset.vt = kind;
+      if (origin) {
+        root.style.setProperty('--vt-x', `${Math.round(origin.x)}px`);
+        root.style.setProperty('--vt-y', `${Math.round(origin.y)}px`);
+      }
+      UP.ui.tip.hide();
+      fx.vt = true;
+      try {
+        const t = document.startViewTransition(() => update());
+        t.finished.finally(() => {
+          delete root.dataset.vt;
+          fx.vt = false;
+        });
+      } catch (e) {
+        delete root.dataset.vt;
+        fx.vt = false;
+        update();
+      }
+    },
+    /** Eintritts-Animation einer Ansicht (Rückfall ohne View-Transitions-API) */
     enter(el, cls = 'enter-3d') {
-      if (!fx.on || !el) return;
+      if (!fx.on || !el || typeof document.startViewTransition === 'function') return;
       el.classList.remove('enter-3d', 'enter-flip');
       void el.offsetWidth;
       el.classList.add(cls);
@@ -91,6 +121,8 @@
     toolbarHtml: '',
 
     init() {
+      document.documentElement.classList.add('booting');
+      setTimeout(() => document.documentElement.classList.remove('booting'), 1800);
       S.init();
       UP.ui.tip.init();
       fx.apply();
@@ -101,6 +133,9 @@
       this.bindKeys();
       S.subscribe((kind) => this.render(kind));
       this.render('init');
+      this.ready = true;
+      if (UP.scene3d) UP.scene3d.init();
+      this.registerSW();
       window.addEventListener('resize', () => {
         clearTimeout(this._rs);
         this._rs = setTimeout(() => S.prefs.view === 'timeline' && UP.timeline.render(), 150);
@@ -112,6 +147,7 @@
       const p = S.prefs;
       if (!VIEWS.includes(p.view)) p.view = 'timeline';
       fx.apply();
+      if (this.ready && fx.on && UP.scene3d) UP.scene3d.init();
       document.documentElement.dataset.density = p.density;
       this.renderTopbar();
       this.renderToolbar();
@@ -134,11 +170,62 @@
       }
       if (UP.timeline.flashAbs) {
         const b = document.querySelector(`.bar[data-abs="${CSS.escape(UP.timeline.flashAbs)}"]`);
-        if (b) b.classList.add('flash');
+        if (b) b.classList.add(fx.on ? 'pop3d' : 'flash');
         UP.timeline.flashAbs = null;
+      }
+      if (UP.timeline.flipAbs) {
+        const b = document.querySelector(`.bar[data-abs="${CSS.escape(UP.timeline.flipAbs)}"]`);
+        if (b && fx.on) b.classList.add('flip3d');
+        UP.timeline.flipAbs = null;
       }
       this.lastView = p.view;
       this.lastYear = p.year;
+    },
+
+    /** Offline-Fähigkeit & Installation (nur über http/https möglich) */
+    registerSW() {
+      if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    },
+
+    setYear(y, origin) {
+      const p = S.prefs;
+      if (!y || y === p.year) return;
+      fx.transition(y > p.year ? 'year-next' : 'year-prev', () => S.setPref('year', y), origin);
+    },
+    setView(v) {
+      const p = S.prefs;
+      if (v === p.view) return;
+      fx.transition(VIEWS.indexOf(v) > VIEWS.indexOf(p.view) ? 'view-fwd' : 'view-back', () => S.setPref('view', v));
+    },
+    /** Zu einem Datum springen und es hervorheben */
+    goTo(iso, { zoom = true } = {}) {
+      const y = +iso.slice(0, 4);
+      const wait = S.prefs.view === 'stats' || S.prefs.year !== y;
+      if (S.prefs.view === 'stats') this.setView('timeline');
+      if (S.prefs.year !== y) this.setYear(y);
+      setTimeout(() => {
+        if (S.prefs.view === 'timeline') {
+          if (zoom && UP.timeline.col() < 14) UP.timeline.zoomMonth(+iso.slice(5, 7) - 1);
+          requestAnimationFrame(() => {
+            UP.timeline.scrollToIso(iso);
+            const Y = UP.viewHelpers.year();
+            const cell = document.querySelector(`.tl-hrow.days .tl-day[data-i="${D.diff(Y.start, iso)}"]`);
+            if (cell) {
+              cell.classList.remove('ping');
+              void cell.offsetWidth;
+              cell.classList.add('ping');
+            }
+          });
+        } else {
+          const c = document.querySelector(`.cd[data-iso="${iso}"]`);
+          if (c) {
+            c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            c.classList.add('ping');
+            setTimeout(() => c.classList.remove('ping'), 1600);
+          }
+        }
+      }, wait ? 750 : 0);
     },
 
     /* ---------------------------------------------------------- Kopfzeile */
@@ -163,11 +250,11 @@
     },
 
     bindTopbar() {
-      $('#year-select').addEventListener('change', (e) => S.setPref('year', +e.target.value));
+      $('#year-select').addEventListener('change', (e) => this.setYear(+e.target.value));
       document.querySelector('.topbar').addEventListener('click', (e) => {
         const b = e.target.closest('[data-action],[data-view]');
         if (!b) return;
-        if (b.dataset.view) return S.setPref('view', b.dataset.view);
+        if (b.dataset.view) return this.setView(b.dataset.view);
         this.action(b.dataset.action, b);
       });
       $('#toolbar').addEventListener('click', (e) => {
@@ -175,33 +262,29 @@
         if (!b) return;
         if (b.dataset.brush) S.setPref('brush', b.dataset.brush);
         else if (b.dataset.gf) S.setPref('groupFilter', b.dataset.gf);
-        else if (b.dataset.month) UP.timeline.scrollToMonth(+b.dataset.month);
         else if (b.dataset.toggle) S.setPref(b.dataset.toggle, !S.prefs[b.dataset.toggle]);
         else if (b.dataset.action) this.action(b.dataset.action, b);
       });
       $('#toolbar').addEventListener('input', (e) => {
-        if (e.target.id === 'search') S.setPref('search', e.target.value);
         if (e.target.id === 'zoom') UP.timeline.zoomAt(+e.target.value);
       });
       $('#toolbar').addEventListener('change', (e) => {
         if (e.target.id === 'cal-person') S.setPref('calPerson', e.target.value);
       });
-      $('#toolbar').addEventListener('keydown', (e) => {
-        if (e.target.id === 'search' && e.key === 'Escape') {
-          e.target.value = '';
-          S.setPref('search', '');
-          e.target.blur();
-        }
-      });
+
     },
 
     action(a, el) {
       const p = S.prefs;
       switch (a) {
         case 'year-prev':
-          return S.setPref('year', p.year - 1);
+          return this.setYear(p.year - 1);
         case 'year-next':
-          return S.setPref('year', p.year + 1);
+          return this.setYear(p.year + 1);
+        case 'palette':
+          return UP.palette.open();
+        case 'clear-search':
+          return S.setPref('search', '');
         case 'today':
           return this.goToday();
         case 'undo':
@@ -216,8 +299,10 @@
           return UP.dialogs.settings();
         case 'help':
           return UP.dialogs.help();
-        case 'theme':
-          return this.setTheme({ auto: 'light', light: 'dark', dark: 'auto' }[p.theme] || 'auto');
+        case 'theme': {
+          const r = (el || $('#btn-theme')).getBoundingClientRect();
+          return this.setTheme({ auto: 'light', light: 'dark', dark: 'auto' }[p.theme] || 'auto', { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+        }
         case 'export-menu':
           return menu.open(0, 0, [
             { title: 'Sichern & Teilen' },
@@ -245,16 +330,7 @@
     },
 
     goToday() {
-      const t = D.today();
-      const y = +t.slice(0, 4);
-      if (S.prefs.year !== y) S.setPref('year', y);
-      requestAnimationFrame(() => {
-        if (S.prefs.view === 'timeline') UP.timeline.scrollToIso(t);
-        else if (S.prefs.view === 'calendar') {
-          const c = document.querySelector(`.cd[data-iso="${t}"]`);
-          if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      });
+      this.goTo(D.today(), { zoom: false });
     },
 
     undo() {
@@ -269,9 +345,20 @@
       toast(msg, { type: 'ok', actions: [{ label: 'Rückgängig', fn: () => this.undo() }, ...extra] });
     },
 
-    setTheme(t) {
-      S.setPref('theme', t);
-      this.applyTheme();
+    setTheme(t, origin) {
+      if (!origin) {
+        const r = $('#btn-theme').getBoundingClientRect();
+        origin = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }
+      const prev = document.documentElement.dataset.theme;
+      const apply = () => {
+        S.setPref('theme', t);
+        this.applyTheme();
+      };
+      let next = t;
+      if (t === 'auto') next = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      if (next === prev) apply();
+      else fx.transition('theme', apply, origin);
     },
     applyTheme() {
       let t = S.prefs.theme || 'auto';
@@ -282,18 +369,16 @@
     /* ------------------------------------------------------- Werkzeugleiste */
     renderToolbar() {
       const p = S.prefs, d = S.data;
-      const brushes = `<div class="tool-block"><span class="label hide-md">Eintragen als</span><div class="brushes">${d.types
-        .map((t, i) => `<button class="brush" data-brush="${esc(t.id)}" style="--c:${esc(t.color)}" aria-pressed="${t.id === p.brush}" title="${esc(t.name)}${i < 9 ? ` (Taste ${i + 1})` : ''}"><span class="sw"></span>${esc(t.name)}${i < 9 ? `<kbd class="hide-md">${i + 1}</kbd>` : ''}</button>`)
+      const brushes = `<div class="tool-block palette-block" role="group" aria-label="Abwesenheitsart zum Eintragen"><span class="brush-lead" title="Eintragen als – Art wählen, dann in der Übersicht über die Tage ziehen">${icon('pencil', 'sm')}</span><div class="brushes">${d.types
+        .map((t, i) => `<button class="brush" data-brush="${esc(t.id)}" style="--c:${esc(t.color)}" aria-pressed="${t.id === p.brush}" title="Eintragen als: ${esc(t.name)}${i < 9 ? ` (Taste ${i + 1})` : ''}"><span class="sw"></span>${esc(t.name)}</button>`)
         .join('')}</div></div>`;
       const gf = `<div class="seg sm" role="group" aria-label="Gruppe filtern"><button data-gf="all" aria-pressed="${p.groupFilter === 'all'}">Alle</button>${d.groups
         .map((g) => `<button data-gf="${esc(g.id)}" aria-pressed="${p.groupFilter === g.id}" title="${esc(g.name)}">${esc(g.short || g.name)}</button>`)
         .join('')}</div>`;
-      const search = `<label class="search">${icon('search', 'sm')}<input id="search" type="search" placeholder="Person suchen …  /" aria-label="Person suchen"></label>`;
+      const filterChip = p.search ? `<button class="chip filter-chip" data-action="clear-search" title="Filter entfernen">${icon('search', 'xs')}„${esc(p.search)}“ ${icon('x', 'xs')}</button>` : '';
       let html = '';
       if (p.view === 'timeline') {
-        const cm = new Date().getMonth();
-        html = `${brushes}${gf}${search}<div class="spacer"></div>
-          <div class="months-jump">${D.MONTHS_SHORT.map((m, i) => `<button data-month="${i}" class="${i === cm && p.year === new Date().getFullYear() ? 'current' : ''}">${m}</button>`).join('')}</div>
+        html = `${brushes}${gf}${filterChip}<div class="spacer"></div>
           <div class="zoom"><button class="btn sm ghost icon-only" data-action="zoom-out" title="Verkleinern (−)">${icon('minus', 'sm')}</button>
             <input type="range" id="zoom" min="3" max="64" step="0.5" aria-label="Zoom">
             <button class="btn sm ghost icon-only" data-action="zoom-in" title="Vergrößern (+)">${icon('plus', 'sm')}</button>
@@ -301,32 +386,26 @@
       } else if (p.view === 'calendar') {
         const opts = `<option value="all" ${p.calPerson === 'all' ? 'selected' : ''}>Alle Mitarbeitenden (Anzahl Abwesender)</option>` +
           d.groups.map((g) => `<optgroup label="${esc(g.name)}">${d.employees.filter((e) => e.group === g.id && (e.active || p.showInactive)).map((e) => `<option value="${esc(e.id)}" ${p.calPerson === e.id ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</optgroup>`).join('');
-        html = `<div class="tool-block"><span class="label">Kalender für</span><select id="cal-person" class="input sm" style="width:auto;min-width:230px">${opts}</select></div>${brushes}<div class="spacer"></div>
+        html = `<div class="tool-block"><select id="cal-person" class="input sm" aria-label="Kalender für" title="Kalender für" style="width:auto;min-width:230px">${opts}</select></div>${brushes}<div class="spacer"></div>
           <button class="chip" data-toggle="showSchool" aria-pressed="${p.showSchool}">${p.showSchool ? '✓ ' : ''}Schulferien</button>
           <button class="chip" data-toggle="showBridges" aria-pressed="${p.showBridges}">${p.showBridges ? '✓ ' : ''}Brückentage</button>`;
       } else {
         html = `<div class="tool-block"><span class="label">Auswertung ${p.year}</span></div><div class="spacer"></div>
           <button class="chip" data-toggle="showInactive" aria-pressed="${p.showInactive}">${p.showInactive ? '✓ ' : ''}Inaktive einbeziehen</button>
-          <button class="btn sm" data-action="csv-stats">${icon('download', 'sm')}Urlaubskonten CSV</button>
           <button class="btn sm" data-action="print">${icon('printer', 'sm')}Drucken</button>`;
       }
       if (html !== this.toolbarHtml) {
         $('#toolbar').innerHTML = html;
         this.toolbarHtml = html;
       }
-      const s = $('#search');
-      if (s && s.value !== p.search && document.activeElement !== s) s.value = p.search;
       const z = $('#zoom');
       if (z && document.activeElement !== z) z.value = p.view === 'timeline' && UP.timeline.curCol ? UP.timeline.curCol : p.zoom;
-      if (s) s.closest('.search').classList.toggle('has-value', !!p.search);
     },
 
     renderLegend() {
-      const d = S.data, p = S.prefs;
+      const p = S.prefs;
       const Y = UP.viewHelpers.year();
-      const types = d.types.map((t) => `<span class="li"><span class="sw" style="background:${esc(t.color)}"></span>${esc(t.name)}</span>`).join('');
-      const html = `${types}<span class="sep"></span>
-        <span class="li"><span class="sw st-genehmigt"></span>Genehmigt</span>
+      const html = `<span class="li"><span class="sw st-genehmigt"></span>Genehmigt</span>
         <span class="li"><span class="sw st-beantragt"></span>Beantragt</span>
         <span class="li"><span class="sw st-geplant"></span>Geplant</span><span class="sep"></span>
         <span class="li"><span class="sw hol"></span>Feiertag</span>
@@ -346,6 +425,7 @@
     /* ---------------------------------------------------- Eintragsaktionen */
     absenceMenu(a, x, y) {
       const setStatus = (st) => {
+        if (st === 'genehmigt') UP.timeline.flipAbs = a.id;
         S.commit(`Status: ${st}`, (d) => (d.absences.find((z) => z.id === a.id).status = st));
         if (st === 'genehmigt') fx.celebrate(document.querySelector(`.bar[data-abs="${CSS.escape(a.id)}"]`));
       };
@@ -386,6 +466,11 @@
           if (!dialogOpen) UP.io.print();
           return;
         }
+        if (mod && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          if (UP.palette.dlg || !dialogOpen) UP.palette.toggle();
+          return;
+        }
         if (dialogOpen || typing || menu.isOpen) return;
         if (mod && !e.shiftKey && e.key.toLowerCase() === 'z') {
           e.preventDefault();
@@ -401,7 +486,7 @@
         }
         if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
           e.preventDefault();
-          return S.setPref('year', S.prefs.year + (e.key === 'ArrowLeft' ? -1 : 1));
+          return this.setYear(S.prefs.year + (e.key === 'ArrowLeft' ? -1 : 1));
         }
         if (mod || e.altKey) return;
         const k = e.key;
@@ -417,17 +502,14 @@
           n: () => this.action('new-absence'),
           t: () => this.goToday(),
           g: () => S.prefs.view === 'timeline' && UP.timeline.fitYear(),
-          z: () => S.setPref('view', 'timeline'),
-          k: () => S.setPref('view', 'calendar'),
-          a: () => S.setPref('view', 'stats'),
+          z: () => this.setView('timeline'),
+          k: () => this.setView('calendar'),
+          a: () => this.setView('stats'),
           '+': () => S.prefs.view === 'timeline' && this.action('zoom-in'),
           '=': () => S.prefs.view === 'timeline' && this.action('zoom-in'),
           '-': () => S.prefs.view === 'timeline' && this.action('zoom-out'),
           '?': () => UP.dialogs.help(),
-          '/': () => {
-            const s = $('#search');
-            if (s) s.focus();
-          }
+          '/': () => UP.palette.open()
         };
         const fn = map[k.toLowerCase()] || map[k];
         if (fn) {

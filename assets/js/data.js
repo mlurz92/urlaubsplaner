@@ -60,10 +60,10 @@
   UP.DEFAULT_TYPES = [
     { id: 'urlaub', name: 'Urlaub', short: 'U', color: '#2f74e0', counts: true },
     { id: 'fza', name: 'Freizeitausgleich', short: 'FZ', color: '#0f9e8e', counts: false },
-    { id: 'fortbildung', name: 'Fortbildung / Kongress', short: 'FB', color: '#8a4fd1', counts: false },
+    { id: 'fortbildung', name: 'Fortbildung', short: 'FB', color: '#8a4fd1', counts: false },
     { id: 'krank', name: 'Krankheit', short: 'K', color: '#e2662b', counts: false },
     { id: 'sonder', name: 'Sonderurlaub', short: 'SU', color: '#d6409f', counts: false },
-    { id: 'sonstiges', name: 'Sonstige Abwesenheit', short: 'S', color: '#64748b', counts: false }
+    { id: 'sonstiges', name: 'Sonstiges', short: 'S', color: '#64748b', counts: false }
   ];
 
   UP.DEFAULT_GROUPS = [

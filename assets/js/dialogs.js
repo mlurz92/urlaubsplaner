@@ -153,20 +153,21 @@
           if (f.save.disabled) return;
           const t = S.type(draft.typeId);
           const emp = S.employee(draft.employeeId);
-          const wasApproved = abs && abs.status === 'genehmigt';
+          const approvedNow = draft.status === 'genehmigt' && !(abs && abs.status === 'genehmigt');
           if (abs) {
+            UP.timeline.focusAbs = abs.id;
+            if (approvedNow) UP.timeline.flipAbs = abs.id;
             S.commit('Eintrag geändert', (data) => {
               Object.assign(data.absences.find((a) => a.id === abs.id), { ...draft, id: abs.id });
             });
-            UP.timeline.focusAbs = abs.id;
             UP.app.undoToast(`${t.name} für ${emp.name} gespeichert`);
           } else {
             const id = S.uid();
+            UP.timeline.flashAbs = id;
             S.commit(`${t.name} angelegt`, (data) => data.absences.push({ ...draft, id }));
             UP.app.undoToast(`${t.name} für ${emp.name}: ${D.range(draft.start, draft.end)}`);
-            UP.timeline.flashAbs = id;
           }
-          if (draft.status === 'genehmigt' && !wasApproved && UP.fx) UP.fx.celebrate(f.save);
+          if (approvedNow && UP.fx) UP.fx.celebrate(f.save);
           dlg.close();
         }
         update();
