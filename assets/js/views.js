@@ -168,6 +168,9 @@
       const v = $('#view-timeline');
       v.innerHTML = `<div class="tl-wrap"><div id="tl-notice"></div><div class="tl-scroll card" id="tl-scroll"></div></div>`;
       this.scroll = $('#tl-scroll');
+      $('#tl-notice').addEventListener('click', (e) => {
+        if (e.target.closest('[data-dismiss-hint]')) S.setPref('hintDismissed', true);
+      });
       const sc = this.scroll;
       sc.addEventListener('pointerdown', (e) => this.onDown(e));
       sc.addEventListener('pointermove', (e) => this.onMove(e));
@@ -231,7 +234,7 @@
       Y.months.forEach((m) => {
         const w = m.len * col;
         const name = w > 95 ? D.MONTHS[m.m] : w > 34 ? D.MONTHS_SHORT[m.m] : D.MONTHS_SHORT[m.m][0];
-        months += `<div class="tl-month" data-month="${m.m}" style="left:${m.start * col}px;width:${w}px" title="${col < 14 ? 'Hineinzoomen: ' : ''}${D.MONTHS[m.m]} ${Y.y}"><span>${name}${w > 140 ? ` <small>${Y.y}</small>` : ''}</span></div>`;
+        months += `<div class="tl-month" data-month="${m.m}" style="--m:${m.m};left:${m.start * col}px;width:${w}px" title="${col < 14 ? 'Hineinzoomen: ' : ''}${D.MONTHS[m.m]} ${Y.y}"><span>${name}${w > 140 ? ` <small>${Y.y}</small>` : ''}</span></div>`;
       });
 
       let weeks = '';
@@ -346,7 +349,7 @@
           const cls = min > 0 && v.present < min ? 'bad' : min > 0 && v.present === min ? 'warn' : '';
           cells += `<div class="cov ${cls}" style="left:${i * col}px" data-tipkind="day" data-i="${i}">${v.present}</div>`;
         });
-        covHtml += `<div class="tl-row"><div class="tl-name"><span>Anwesend ${esc(c.g.short || c.g.name)}</span><small>${c.g.minPresent ? `min. ${c.g.minPresent}` : ''}</small></div><div class="tl-lane" style="width:${W}px">${cells}</div></div>`;
+        covHtml += `<div class="tl-row cov-row"><div class="tl-name"><span>Anwesend ${esc(c.g.short || c.g.name)}</span><small>${c.g.minPresent ? `min. ${c.g.minPresent}` : ''}</small></div><div class="tl-lane" style="width:${W}px">${cells}</div></div>`;
       });
 
       sc.innerHTML = `<div class="tl ${narrow ? 'narrow' : ''} ${tiny ? 'tiny' : ''} ${micro ? 'micro' : ''}" style="width:${W + this.nameW()}px">
@@ -360,8 +363,8 @@
       if (!UP.holidays.hasSchoolData(Y.y)) {
         notes.push(`<div class="notice">${icon('info', 'sm')}<span>Für ${Y.y} liegen noch keine (vollständigen) amtlichen Schulferientermine für Sachsen vor. Feiertage werden berechnet und sind vollständig.</span></div>`);
       }
-      if (!S.absencesInYear(Y.y).length && S.data.employees.length) {
-        notes.push(`<div class="notice info">${icon('bulb', 'sm')}<span><b>So geht’s:</b> Abwesenheitsart oben wählen, dann in der Zeile einer Person mit gedrückter Maustaste über die gewünschten Tage ziehen. Einträge lassen sich anschließend verschieben, an den Rändern verlängern oder per Rechtsklick bearbeiten.</span></div>`);
+      if (!p.hintDismissed && !S.absencesInYear(Y.y).length && S.data.employees.length) {
+        notes.push(`<div class="notice info">${icon('bulb', 'sm')}<span><b>So geht’s:</b> Abwesenheitsart oben wählen, dann in der Zeile einer Person über die gewünschten Tage ziehen. Einträge lassen sich verschieben, an den Rändern verlängern oder per Rechtsklick bearbeiten. <kbd>Strg</kbd> <kbd>K</kbd> öffnet die Befehlspalette.</span><button class="btn sm ghost icon-only" data-dismiss-hint title="Hinweis ausblenden">${icon('x', 'sm')}</button></div>`);
       }
       $('#tl-notice').innerHTML = notes.join('');
       $('#tl-notice').style.display = notes.length ? '' : 'none';
@@ -428,7 +431,7 @@
       }
       const cls = `bar st-${a.status} ${w < 46 ? 'xs' : ''} ${a.halfDay ? 'half' : ''} ${a.start < s ? 'clip-l' : ''} ${a.end > en ? 'clip-r' : ''}`;
       return `<div class="${cls}" data-abs="${esc(a.id)}" data-tipkind="abs" tabindex="0" role="button"
-        aria-label="${esc(H.absLabel(a))}, ${esc(a.status)}" style="--c:${esc(t.color)};left:${i0 * col + 1}px;width:${w}px">
+        aria-label="${esc(H.absLabel(a))}, ${esc(a.status)}" style="--c:${esc(t.color)};--x:${(i0 / Y.n).toFixed(3)};left:${i0 * col + 1}px;width:${w}px">
         ${off}${w >= 20 ? '<span class="h l"></span>' : ''}${label}${w >= 20 ? '<span class="h r"></span>' : ''}</div>`;
     },
 
@@ -517,11 +520,18 @@
       }
     },
 
+    /** Balken unter dem Zeiger – datenbasiert, damit laufende 3D-Animationen das Greifen nicht stören */
+    barAt(lane, clientX) {
+      const iso = H.year().days[this.idxFromX(lane, clientX)].iso;
+      const a = S.data.absences.find((x) => x.employeeId === lane.dataset.emp && x.start <= iso && x.end >= iso);
+      return a ? lane.querySelector(`.bar[data-abs="${CSS.escape(a.id)}"]`) : null;
+    },
+
     onDown(e) {
       if (e.button !== 0) return;
-      const bar = e.target.closest('.bar');
       const lane = e.target.closest('.tl-lane[data-emp]');
       if (!lane) return;
+      const bar = e.target.closest('.bar') || this.barAt(lane, e.clientX);
       const emp = S.employee(lane.dataset.emp);
       if (!emp) return;
       if (bar) {
@@ -695,6 +705,7 @@
         }
         const t = S.type(S.prefs.brush);
         const id = S.uid();
+        this.flashAbs = id;
         S.commit(`${t.name} angelegt`, (d) => {
           d.absences.push({ id, employeeId: emp.id, typeId: t.id, start, end, halfDay: false, status: s.defaultStatus, note: '' });
         });
@@ -717,16 +728,16 @@
     onDbl(e) {
       clearTimeout(this.clickTimer);
       const lane = e.target.closest('.tl-lane[data-emp]');
-      if (!lane || e.target.closest('.bar')) return;
+      if (!lane || e.target.closest('.bar') || this.barAt(lane, e.clientX)) return;
       const Y = H.year();
       const i = this.idxFromX(lane, e.clientX);
       UP.dialogs.absence({ empId: lane.dataset.emp, start: Y.days[i].iso, end: Y.days[i].iso, typeId: S.prefs.brush });
     },
 
     onContext(e) {
-      const bar = e.target.closest('.bar');
       const lane = e.target.closest('.tl-lane[data-emp]');
       if (!lane) return;
+      const bar = e.target.closest('.bar') || this.barAt(lane, e.clientX);
       e.preventDefault();
       if (bar) {
         const a = S.data.absences.find((x) => x.id === bar.dataset.abs);
@@ -1065,7 +1076,7 @@
           const seg = (v, cls) => (v > 0 ? `<span class="${cls}" style="width:${(Math.min(v, base) / base) * 100}%"></span>` : '');
           const over = Math.max(0, st.used - st.total);
           return `<tr>
-            <td><div class="person" data-emp="${esc(r.e.id)}"><span class="avatar" style="--c:${esc(r.g ? r.g.color : '#64748b')}">${esc(initials(r.e.name))}</span><span><b>${esc(r.e.name)}</b><small>${esc(r.e.position || '')}${r.g && r.g.short !== r.e.position ? (r.e.position ? ' · ' : '') + esc(r.g.name) : ''}</small></span></div></td>
+            <td><div class="person" data-emp="${esc(r.e.id)}"><span class="avatar" style="--c:${esc(r.g ? r.g.color : '#64748b')}">${esc(initials(r.e.name))}</span><span><b>${esc(r.e.name)}</b><small>${esc(r.e.position || (r.g ? r.g.short : ''))}</small></span></div></td>
             <td class="r">${fd(st.entitlement)}</td>
             <td class="r">${st.carryover ? fd(st.carryover) : '–'}</td>
             <td class="r strong">${fd(st.total)}</td>
@@ -1119,7 +1130,7 @@
           if (!v) return;
           const h = ((CH - PB - PT) * v) / niceMax;
           const yy = CH - PB - ((CH - PB - PT) * acc) / niceMax - h;
-          svg += `<rect x="${x}" y="${yy}" width="${w}" height="${Math.max(0, h - 1.5)}" rx="3" fill="${esc(t.color)}"><title>${D.MONTHS[m]}: ${esc(t.name)} ${fd(v)} T</title></rect>`;
+          svg += `<rect class="cbar" style="--m:${m}" x="${x}" y="${yy}" width="${w}" height="${Math.max(0, h - 1.5)}" rx="3" fill="${esc(t.color)}"><title>${D.MONTHS[m]}: ${esc(t.name)} ${fd(v)} T</title></rect>`;
           acc += v;
         });
         if (acc) svg += `<text class="val" x="${x + w / 2}" y="${CH - PB - ((CH - PB - PT) * acc) / niceMax - 5}" text-anchor="middle">${fd(acc)}</text>`;
@@ -1232,11 +1243,11 @@
         S.commit('Antrag genehmigt', (d) => {
           d.absences.find((a) => a.id === b.dataset.approve).status = 'genehmigt';
         });
+        UP.fx.celebrate(b);
         return UP.app.undoToast('Eintrag genehmigt');
       }
       if (b.dataset.goto) {
-        S.setPref('view', 'timeline');
-        requestAnimationFrame(() => UP.timeline.scrollToIso(b.dataset.goto));
+        UP.app.goTo(b.dataset.goto);
         return;
       }
       const act = b.dataset.action;
@@ -1246,6 +1257,7 @@
         UP.ui.confirmDialog({ title: 'Alle genehmigen?', message: `${ids.length} Einträge werden auf „Genehmigt“ gesetzt.`, confirm: 'Genehmigen' }).then((ok) => {
           if (!ok) return;
           S.commit(`${ids.length} Einträge genehmigt`, (d) => d.absences.forEach((a) => ids.includes(a.id) && (a.status = 'genehmigt')));
+          UP.fx.celebrate(null);
           UP.app.undoToast(`${ids.length} Einträge genehmigt`);
         });
       } else if (act === 'csv-stats') UP.io.csvStats();
