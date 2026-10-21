@@ -681,7 +681,12 @@
           <div>Wiederholen ${k('Strg', 'Y')}</div>
           <div>Vorjahr / Folgejahr ${k('Alt', '←')}${k('Alt', '→')}</div>
           <div>Zu heute springen ${k('T')}</div>
-          <div>Ganzes Jahr einpassen ${k('G')}</div>
+          <div>Ganzes Jahr ein/aus ${k('G')}</div>
+          <div>Horizontal scrollen ${k('←')}${k('→')} Woche</div>
+          <div>Monat vor / zurück ${k('⇧', '←')}${k('⇧', '→')}</div>
+          <div>Jahresanfang / -ende ${k('Pos1')}${k('Ende')}</div>
+          <div>Scrollen mit Mausrad ${k('Rad')} / ${k('⇧', 'Rad')}</div>
+          <div>Ansicht ziehen: Kopfzeile oder ${k('Mitteltaste')}</div>
           <div>Ansicht: Übersicht ${k('Z')}</div>
           <div>Ansicht: Kalender ${k('K')}</div>
           <div>Ansicht: Auswertung ${k('A')}</div>

@@ -32,6 +32,7 @@
       { group: 'Aktionen', icon: 'plus', label: 'Neuer Eintrag', kb: 'N', run: () => A.action('new-absence') },
       { group: 'Aktionen', icon: 'target', label: 'Zu heute springen', kb: 'T', run: () => A.goToday() },
       { group: 'Aktionen', icon: 'fit', label: 'Ganzes Jahr anzeigen', kb: 'G', keys: 'zoom übersicht alle', run: () => { A.setView('timeline'); UP.timeline.fitYear(); } },
+      { group: 'Aktionen', icon: 'timeline', label: 'Tagesansicht (horizontal scrollen)', keys: 'zoom tage scrollen', run: () => { A.setView('timeline'); if (S.prefs.fit) UP.timeline.toggleFit(); } },
       { group: 'Aktionen', icon: 'undo', label: 'Rückgängig', hint: S.undoLabel, kb: 'Strg Z', run: () => A.undo(), when: () => S.canUndo },
       { group: 'Aktionen', icon: 'redo', label: 'Wiederholen', hint: S.redoLabel, kb: 'Strg Y', run: () => A.redo(), when: () => S.canRedo },
       { group: 'Ansicht', icon: 'timeline', label: 'Übersicht aller Mitarbeitenden', kb: 'Z', keys: 'zeitstrahl timeline', run: () => A.setView('timeline') },

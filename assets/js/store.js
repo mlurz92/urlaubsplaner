@@ -46,8 +46,9 @@
     return {
       year: new Date().getFullYear(),
       view: 'timeline',
+      v: 3,
       zoom: 28,
-      fit: true,
+      fit: false,
       theme: 'auto',
       density: 'comfort',
       brush: 'urlaub',
@@ -126,7 +127,10 @@
     }
     try {
       const raw = localStorage.getItem(PREFS_KEY);
-      prefs = { ...defaultPrefs(), ...(raw ? JSON.parse(raw) : {}) };
+      const saved = raw ? JSON.parse(raw) : {};
+      prefs = { ...defaultPrefs(), ...saved };
+      // v3: Übersicht startet tageweise und horizontal scrollbar statt „Ganzes Jahr“
+      if (raw && !(saved.v >= 3)) Object.assign(prefs, { v: 3, fit: false, zoom: 28 });
     } catch (e) {
       prefs = defaultPrefs();
     }
