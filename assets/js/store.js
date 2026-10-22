@@ -247,6 +247,14 @@
         Object.assign(d, nd);
       });
     },
+    /** Stand eines anderen Geräts übernehmen (ohne Undo-Eintrag, Verlauf wird geleert) */
+    applyRemote(raw) {
+      data = normalize(raw);
+      undoStack.length = 0;
+      redoStack.length = 0;
+      persist();
+      emit('data');
+    },
     resetData() {
       S.commit('Alle Daten zurückgesetzt', (d) => {
         const nd = defaultData();
