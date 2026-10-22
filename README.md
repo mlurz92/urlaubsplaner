@@ -104,6 +104,7 @@ Anlegen, bearbeiten, sortieren, deaktivieren und löschen. Voreingestellt sind d
 - Mehrere geöffnete Tabs desselben Browsers werden synchronisiert.
 - Andere Browser oder Geräte sehen diese Daten **nicht**. Für die gemeinsame Nutzung im Team eine Sicherung exportieren und dort importieren, bzw. eine zentrale Sicherungsdatei pflegen.
 - Gelöschte Browserdaten bedeuten Datenverlust – deshalb regelmäßig eine Sicherung exportieren.
+- **Ortsunabhängig speichern (optional, ohne Anmeldung):** Mit einem kostenlosen Firebase-Projekt teilen alle Geräte denselben Planungsstand in Echtzeit – inklusive Offline-Betrieb und Zusammenführung gleichzeitiger Änderungen. Einrichtung: Firebase-Werte und Teamschlüssel in `assets/js/sync-config.js` eintragen, Anleitung unter [docs/firebase-sync.md](docs/firebase-sync.md). Ohne Konfiguration bleibt alles lokal.
 
 ## Technik und Projektstruktur
 
@@ -120,8 +121,11 @@ assets/js/ui.js         Tooltips, Kontextmenü, Dialoge, Toasts, Downloads
 assets/js/views.js      Übersicht (Zeitstrahl), Jahreskalender, Auswertung
 assets/js/dialogs.js    Eintrags-, Personen-, Einstellungs- und Hilfedialoge, Import/Export/Druck
 assets/js/palette.js    Befehlspalette (Strg+K)
+assets/js/sync.js       Ortsunabhängige Speicherung (Firebase, ohne Anmeldung)
+assets/js/sync-config.js  Zugangsdaten dafür (leer = rein lokal)
 assets/js/app.js        Steuerung, Seitenübergänge, Werkzeugleiste, Legende, Tastatur, Effekte
 Mitarbeitende.txt       Ursprüngliche Mitarbeitendenliste
+docs/firebase-sync.md   Anleitung: ortsunabhängige Speicherung mit Firebase
 ```
 
 - Kein Build-Schritt, kein Framework. Optional über CDN: Schriftart *Inter* (Google Fonts) und [canvas-confetti](https://github.com/catdad/canvas-confetti) für den Konfetti-Effekt. Beides wird asynchron geladen; ohne Internet bleibt die App voll funktionsfähig (Systemschrift, kein Konfetti).
