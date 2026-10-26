@@ -82,7 +82,8 @@
     { name: 'Dr. Martin', position: 'FA', group: 'fa' },
     { name: 'Fr. Licenji', position: 'AÄ', group: 'aa' },
     { name: 'Hr. Sebastian', position: 'AA', group: 'aa' },
-    { name: 'Hr. Safari', position: 'AA', group: 'aa' }
+    { name: 'Hr. Safari', position: 'AA', group: 'aa' },
+    { name: 'Hr. Linke', position: 'AA', group: 'aa', startDate: '2027-02-01' }
   ];
 
   UP.STATUSES = [

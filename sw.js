@@ -2,7 +2,7 @@
  * Service Worker: macht den Urlaubsplaner offline nutzbar und installierbar.
  * App-Dateien: zuerst Netz (immer aktuell), sonst Cache. CDN-Ressourcen: zuerst Cache.
  */
-const CACHE = 'urlaubsplaner-v3';
+const CACHE = 'urlaubsplaner-v4';
 const APP = [
   './',
   'index.html',
@@ -16,7 +16,9 @@ const APP = [
   'assets/js/views.js',
   'assets/js/dialogs.js',
   'assets/js/palette.js',
-  'assets/js/app.js'
+  'assets/js/app.js',
+  'assets/js/sync-config.js',
+  'assets/js/sync.js'
 ];
 
 self.addEventListener('install', (e) => {
@@ -44,7 +46,7 @@ self.addEventListener('fetch', (e) => {
         })
         .catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('index.html')))
     );
-  } else if (/cdnjs\.cloudflare\.com|fonts\.(googleapis|gstatic)\.com/.test(url.host)) {
+  } else if (/cdnjs\.cloudflare\.com|fonts\.(googleapis|gstatic)\.com|www\.gstatic\.com/.test(url.host)) {
     e.respondWith(
       caches.match(req).then(
         (hit) =>

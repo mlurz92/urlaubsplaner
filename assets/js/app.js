@@ -384,7 +384,7 @@
             <button class="btn sm" data-action="fit" aria-pressed="${!!p.fit}" title="${p.fit ? 'Zurück zur Tagesansicht mit horizontalem Scrollen (G)' : 'Alle Mitarbeitenden über das ganze Jahr auf einen Blick (G)'}">${icon('fit', 'sm')}Ganzes Jahr</button></div>`;
       } else if (p.view === 'calendar') {
         const opts = `<option value="all" ${p.calPerson === 'all' ? 'selected' : ''}>Alle Mitarbeitenden (Anzahl Abwesender)</option>` +
-          d.groups.map((g) => `<optgroup label="${esc(g.name)}">${d.employees.filter((e) => e.group === g.id && (e.active || p.showInactive)).map((e) => `<option value="${esc(e.id)}" ${p.calPerson === e.id ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</optgroup>`).join('');
+          d.groups.map((g) => `<optgroup label="${esc(g.name)}">${d.employees.filter((e) => e.group === g.id && (e.active || p.showInactive) && UP.employedIn(e, p.year)).map((e) => `<option value="${esc(e.id)}" ${p.calPerson === e.id ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</optgroup>`).join('');
         html = `<div class="tool-block"><select id="cal-person" class="input sm" aria-label="Kalender für" title="Kalender für" style="width:auto;min-width:230px">${opts}</select></div>${brushes}<div class="spacer"></div>
           <button class="chip" data-toggle="showSchool" aria-pressed="${p.showSchool}">${p.showSchool ? '✓ ' : ''}Schulferien</button>
           <button class="chip" data-toggle="showBridges" aria-pressed="${p.showBridges}">${p.showBridges ? '✓ ' : ''}Brückentage</button>`;

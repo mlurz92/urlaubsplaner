@@ -226,6 +226,8 @@
         ok = false;
         alerts.push(['error', 'alert', `Überschneidung mit bestehendem Eintrag: ${ov.map((a) => `${esc(S.type(a.typeId).name)} ${D.range(a.start, a.end)}`).join('; ')}.`]);
       }
+      if (emp.startDate && draft.start < emp.startDate) alerts.push(['warn', 'info', `${esc(emp.name)} ist erst ab ${D.fmt(emp.startDate)} im Team – Tage davor zählen nicht.`]);
+      if (emp.endDate && draft.end > emp.endDate) alerts.push(['warn', 'info', `${esc(emp.name)} ist nur bis ${D.fmt(emp.endDate)} im Team – Tage danach zählen nicht.`]);
       if (days === 0) alerts.push(['warn', 'info', 'Der Zeitraum enthält keine Arbeitstage dieser Person.']);
       // Besetzung
       const g = S.group(emp.group);
@@ -275,7 +277,7 @@
           return `<div class="emp-row ${e.active ? '' : 'inactive'}">
             <div class="order"><button data-up="${i}" ${i === 0 ? 'disabled' : ''} title="Nach oben">${icon('chevron-up', 'xs')}</button><button data-down="${i}" ${i === d.employees.length - 1 ? 'disabled' : ''} title="Nach unten">${icon('chevron-down', 'xs')}</button></div>
             <span class="avatar" style="--c:${esc(g ? g.color : '#64748b')}">${esc(initials(e.name))}</span>
-            <div class="nm"><b>${esc(e.name)}</b><small>${esc(e.position || '–')} · ${esc(g ? g.name : 'ohne Gruppe')} · ${fd(st.total)} T Anspruch ${y} · ${n} Einträge</small></div>
+            <div class="nm"><b>${esc(e.name)}</b><small>${esc(e.position || '–')} · ${esc(g ? g.name : 'ohne Gruppe')}${e.startDate ? ` · ab ${D.fmt(e.startDate)}` : ''}${e.endDate ? ` · bis ${D.fmt(e.endDate)}` : ''} · ${fd(st.total)} T Anspruch ${y} · ${n} Einträge</small></div>
             <label class="switch" title="${e.active ? 'Aktiv' : 'Inaktiv'}"><input type="checkbox" data-active="${esc(e.id)}" ${e.active ? 'checked' : ''}><span></span></label>
             <button class="btn sm ghost icon-only" data-edit="${esc(e.id)}" title="Bearbeiten">${icon('pencil', 'sm')}</button>
             <button class="btn sm ghost icon-only" data-del="${esc(e.id)}" title="Löschen">${icon('trash', 'sm')}</button>
@@ -346,7 +348,7 @@
     const isNew = !emp;
     const e = emp
       ? JSON.parse(JSON.stringify(emp))
-      : { id: S.uid(), name: '', position: '', group: (d.groups[0] || {}).id || '', entitlement: d.settings.defaultEntitlement, years: {}, workdays: [1, 2, 3, 4, 5], active: true, note: '' };
+      : { id: S.uid(), name: '', position: '', group: (d.groups[0] || {}).id || '', entitlement: d.settings.defaultEntitlement, years: {}, workdays: [1, 2, 3, 4, 5], active: true, note: '', startDate: '', endDate: '' };
     const yr = e.years[y] || {};
     const wdLabels = [[1, 'Mo'], [2, 'Di'], [3, 'Mi'], [4, 'Do'], [5, 'Fr'], [6, 'Sa'], [0, 'So']];
     const prevRest = isNew ? null : S.stats(emp, y - 1).rest;
@@ -359,11 +361,13 @@
           <div class="field"><label for="e-pos">Position / Kürzel</label><input type="text" id="e-pos" list="pos-list" value="${esc(e.position)}" placeholder="z. B. FA, FÄ, OA, AA">
             <datalist id="pos-list"><option value="CA"><option value="OA"><option value="FA"><option value="FÄ"><option value="AA"><option value="AÄ"><option value="MTR"></datalist></div>
           <div class="field span-2"><label for="e-group">Gruppe (für Mindestbesetzung)</label><select id="e-group">${d.groups.map((g) => `<option value="${esc(g.id)}" ${g.id === e.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select></div>
-          <div class="field"><label for="e-ent">Standard-Jahresurlaub</label><input type="number" id="e-ent" min="0" max="60" step="0.5" value="${esc(e.entitlement)}"><span class="hint">Tage pro Jahr (Vorgabe für alle Jahre)</span></div>
+          <div class="field"><label for="e-ent">Standard-Jahresurlaub</label><input type="number" id="e-ent" min="0" max="60" step="0.5" value="${esc(e.entitlement)}"><span class="hint">Tage pro Jahr; bei Eintritt/Austritt im Jahr automatisch anteilig (1/12 je vollem Monat)</span></div>
           <div class="field"><label for="e-ent-y">Anspruch ${y} (abweichend)</label><input type="number" id="e-ent-y" min="0" max="80" step="0.5" value="${yr.entitlement != null ? esc(yr.entitlement) : ''}" placeholder="${esc(e.entitlement)}"><span class="hint">leer = Standard; z. B. bei Eintritt im Jahr</span></div>
           <div class="field span-2"><label for="e-carry">Übertrag aus ${y - 1}</label>
             <div class="inline"><input type="number" id="e-carry" min="-30" max="80" step="0.5" value="${yr.carryover != null ? esc(yr.carryover) : ''}" placeholder="0" style="max-width:140px">
             ${prevRest != null ? `<button type="button" class="btn sm" data-calc>${icon('copy', 'sm')}Rest ${y - 1} übernehmen (${fd(prevRest)} T)</button>` : ''}</div></div>
+          <div class="field"><label for="e-start">Eintritt</label><input type="date" id="e-start" value="${esc(e.startDate || '')}"><span class="hint">leer = bereits im Team</span></div>
+          <div class="field"><label for="e-end">Austritt</label><input type="date" id="e-end" value="${esc(e.endDate || '')}"><span class="hint">leer = unbefristet</span></div>
           <div class="field span-2"><span class="lbl">Arbeitstage</span><div class="wd-picker">${wdLabels.map(([v, l]) => `<label><input type="checkbox" data-wd="${v}" ${e.workdays.includes(v) ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div><span class="hint">Nur an Arbeitstagen werden Urlaubstage gezählt (z. B. Teilzeit).</span></div>
           <div class="field span-2"><label for="e-note">Notiz</label><input type="text" id="e-note" value="${esc(e.note)}" placeholder="optional"></div>
           <div class="span-2"><label class="check"><input type="checkbox" id="e-active" ${e.active ? 'checked' : ''}> Aktiv (in Planung und Besetzung berücksichtigen)</label></div>
@@ -404,6 +408,11 @@
             toast('Mindestens ein Arbeitstag muss gewählt sein.', { type: 'error' });
             return;
           }
+          const startDate = $('#e-start', el).value, endDate = $('#e-end', el).value;
+          if (startDate && endDate && endDate < startDate) {
+            toast('Der Austritt liegt vor dem Eintritt.', { type: 'error' });
+            return;
+          }
           const entY = $('#e-ent-y', el).value, carry = $('#e-carry', el).value;
           const years = { ...e.years };
           const yy = {};
@@ -420,7 +429,9 @@
             years,
             workdays: wds,
             active: $('#e-active', el).checked,
-            note: $('#e-note', el).value.trim()
+            note: $('#e-note', el).value.trim(),
+            startDate,
+            endDate
           };
           S.commit(isNew ? `${nm} angelegt` : `${nm} geändert`, (data) => {
             if (isNew) data.employees.push(upd);

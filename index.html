@@ -67,6 +67,7 @@
     <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"/></symbol>
     <symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.56-2.5 5.56-5.56C21.96 6.01 17.46 2 12 2Z"/></symbol>
     <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
     <symbol id="i-school" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></symbol>
   </svg>
 
@@ -106,6 +107,7 @@
         <button class="btn primary" data-action="new-absence" title="Neuer Eintrag (N)"><svg class="icon sm"><use href="#i-plus"/></svg><span class="hide-sm">Eintrag</span></button>
         <button class="btn ghost icon-only" data-action="employees" title="Mitarbeitende verwalten"><svg class="icon"><use href="#i-users"/></svg></button>
         <button class="btn ghost icon-only" data-action="export-menu" title="Export, Import &amp; Drucken"><svg class="icon"><use href="#i-download"/></svg></button>
+        <button class="btn ghost icon-only" id="btn-sync" hidden title="Synchronisierung"><svg class="icon"><use href="#i-cloud"/></svg></button>
         <button class="btn ghost icon-only" data-action="settings" title="Einstellungen"><svg class="icon"><use href="#i-settings"/></svg></button>
         <button class="btn ghost icon-only hide-sm" data-action="theme" id="btn-theme" title="Darstellung wechseln"><svg class="icon"><use href="#i-sun"/></svg></button>
       </div>
@@ -136,6 +138,9 @@
   <script src="assets/js/dialogs.js"></script>
   <script src="assets/js/palette.js"></script>
   <script src="assets/js/app.js"></script>
+  <!-- Ortsunabhängige Speicherung (Firebase); inaktiv, solange sync-config.js leer ist -->
+  <script src="assets/js/sync-config.js"></script>
+  <script src="assets/js/sync.js"></script>
   <!-- Konfetti-Effekt beim Genehmigen (optional, App funktioniert auch offline ohne) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js" async></script>
 </body>

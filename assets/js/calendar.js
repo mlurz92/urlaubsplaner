@@ -270,7 +270,17 @@
    * Wert eines Kalendertags für eine Person: 0 (frei), 0.5 oder 1 Arbeitstag.
    * settings.xmasRule: 'voll' | 'halb' | 'frei' für 24.12. und 31.12.
    */
+  /** Liegt der Tag innerhalb der Beschäftigung (Eintritt/Austritt)? */
+  UP.employedOn = function (iso, emp) {
+    return !emp || ((!emp.startDate || iso >= emp.startDate) && (!emp.endDate || iso <= emp.endDate));
+  };
+  /** Ist die Person im Jahr y mindestens einen Tag beschäftigt? */
+  UP.employedIn = function (emp, y) {
+    return (!emp.startDate || emp.startDate <= `${y}-12-31`) && (!emp.endDate || emp.endDate >= `${y}-01-01`);
+  };
+
   UP.dayValue = function (iso, emp, settings) {
+    if (!UP.employedOn(iso, emp)) return 0;
     const wd = D.weekday(iso);
     const workdays = emp && emp.workdays && emp.workdays.length ? emp.workdays : [1, 2, 3, 4, 5];
     if (!workdays.includes(wd)) return 0;

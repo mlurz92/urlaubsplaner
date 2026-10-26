@@ -4387,3 +4387,97 @@ body.panning .tl-nav {
 .tl-scroll::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* ==========================================================================
+   Synchronisierung (Wolken-Symbol und Dialog)
+   ========================================================================== */
+#btn-sync {
+  position: relative;
+}
+#btn-sync::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--faint);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+#btn-sync[data-sync='ok']::after {
+  background: var(--ok);
+}
+#btn-sync[data-sync='sync']::after,
+#btn-sync[data-sync='pending']::after {
+  background: var(--warn);
+}
+#btn-sync[data-sync='offline']::after,
+#btn-sync[data-sync='error']::after {
+  background: var(--danger);
+}
+.lead-text {
+  margin: 0 0 14px;
+  color: var(--text-2);
+}
+.sync-choice {
+  display: grid;
+  gap: 10px;
+}
+.sync-opt {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 4px 12px;
+  align-items: start;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--glass-soft);
+  color: var(--text);
+  font: inherit;
+}
+button.sync-opt {
+  cursor: pointer;
+}
+button.sync-opt:hover {
+  border-color: var(--primary);
+}
+.sync-opt .icon {
+  grid-row: span 2;
+  color: var(--primary);
+  margin-top: 1px;
+}
+.sync-opt span,
+.sync-opt .inline {
+  grid-column: 2;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.sync-opt .inline {
+  margin-top: 6px;
+}
+.sync-opt .inline .input {
+  flex: 1;
+  min-width: 0;
+}
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+#btn-sync[hidden] {
+  display: none;
+}
+
+/* Zeitraum vor Eintritt bzw. nach Austritt */
+.tl-out {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  background: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--text) 7%, transparent) 0 5px, transparent 5px 11px);
+  cursor: not-allowed;
+}
