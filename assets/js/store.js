@@ -24,6 +24,7 @@
         defaultStatus: 'geplant',
         defaultType: 'urlaub',
         quickCreate: false,
+        migrations: ['linke-2027'],
         events: []
       },
       groups: clone(UP.DEFAULT_GROUPS),
@@ -37,7 +38,9 @@
         years: {},
         workdays: [1, 2, 3, 4, 5],
         active: true,
-        note: ''
+        note: '',
+        startDate: e.startDate || '',
+        endDate: e.endDate || ''
       })),
       absences: []
     };
@@ -94,8 +97,11 @@
       years: e.years && typeof e.years === 'object' ? e.years : {},
       workdays: Array.isArray(e.workdays) && e.workdays.length ? e.workdays.map(Number) : [1, 2, 3, 4, 5],
       active: e.active !== false,
-      note: String(e.note || '')
+      note: String(e.note || ''),
+      startDate: D.valid(e.startDate) ? e.startDate : '',
+      endDate: D.valid(e.endDate) ? e.endDate : ''
     }));
+    d.settings.migrations = raw.settings && Array.isArray(raw.settings.migrations) ? raw.settings.migrations.map(String) : [];
     const empIds = new Set(d.employees.map((e) => e.id));
     const typeIds = new Set(d.types.map((t) => t.id));
     d.absences = d.absences
@@ -118,10 +124,28 @@
   const listeners = new Set();
   let storageOk = true;
 
+  /** Einmalige Datenanpassungen für bestehende Datenstände */
+  function migrate(d) {
+    const done = d.settings.migrations;
+    if (!done.includes('linke-2027')) {
+      // Neuer Assistenzarzt ab 01.02.2027
+      if (!d.employees.some((e) => /linke/i.test(e.name))) {
+        const aa = d.groups.find((g) => g.id === 'aa') || d.groups[d.groups.length - 1];
+        d.employees.push({
+          id: uid(), name: 'Hr. Linke', position: 'AA', group: aa ? aa.id : '',
+          entitlement: +d.settings.defaultEntitlement || 30, years: {}, workdays: [1, 2, 3, 4, 5],
+          active: true, note: '', startDate: '2027-02-01', endDate: ''
+        });
+      }
+      done.push('linke-2027');
+    }
+    return d;
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(DATA_KEY);
-      data = raw ? normalize(JSON.parse(raw)) : defaultData();
+      data = raw ? migrate(normalize(JSON.parse(raw))) : defaultData();
     } catch (e) {
       console.warn('Daten konnten nicht geladen werden', e);
       data = defaultData();
@@ -295,9 +319,23 @@
     overlaps(empId, start, end, excludeId) {
       return data.absences.filter((a) => a.employeeId === empId && a.id !== excludeId && a.start <= end && a.end >= start);
     },
+    /** Volle Beschäftigungsmonate im Jahr y (für anteiligen Urlaub nach § 5 BUrlG) */
+    employedMonths(emp, y) {
+      let n = 0;
+      for (let m = 0; m < 12; m++) {
+        if (UP.employedOn(D.iso(y, m, 1), emp) && UP.employedOn(D.iso(y, m, D.daysInMonth(y, m)), emp)) n++;
+      }
+      return n;
+    },
+    /** Jahresanspruch; bei Eintritt/Austritt im Jahr anteilig 1/12 je vollem Monat, ab ½ Tag aufgerundet */
     entitlement(emp, y) {
       const yr = emp.years && emp.years[y];
-      return yr && yr.entitlement != null && yr.entitlement !== '' ? +yr.entitlement : +emp.entitlement || 0;
+      if (yr && yr.entitlement != null && yr.entitlement !== '') return +yr.entitlement;
+      const full = +emp.entitlement || 0;
+      const months = S.employedMonths(emp, y);
+      if (months >= 12) return full;
+      const v = (full * months) / 12;
+      return v - Math.floor(v) >= 0.5 ? Math.ceil(v) : v;
     },
     carryover(emp, y) {
       const yr = emp.years && emp.years[y];

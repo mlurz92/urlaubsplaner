@@ -23,6 +23,7 @@
       const emps = d.employees.filter(
         (e) =>
           (p.showInactive || e.active) &&
+          UP.employedIn(e, p.year) &&
           (p.groupFilter === 'all' || e.group === p.groupFilter) &&
           (!q || e.name.toLowerCase().includes(q) || (e.position || '').toLowerCase().includes(q))
       );
@@ -439,6 +440,16 @@
       const restCls = st.rest < 0 ? 'neg' : st.rest === 0 ? 'zero' : '';
       const g = S.group(e.group);
       const wdText = e.workdays.length === 5 && [1, 2, 3, 4, 5].every((x) => e.workdays.includes(x)) ? '' : ` · ${e.workdays.length} T/Woche`;
+      const yEnd = `${Y.y}-12-31`;
+      const startIn = e.startDate && e.startDate > Y.start && e.startDate <= yEnd;
+      const endIn = e.endDate && e.endDate >= Y.start && e.endDate < yEnd;
+      const tenure = startIn ? ` · ab ${D.fmt(e.startDate, 'short')}` : endIn ? ` · bis ${D.fmt(e.endDate, 'short')}` : '';
+      let out = '';
+      if (startIn) out += `<div class="tl-out" style="left:0;width:${D.diff(Y.start, e.startDate) * col}px" title="Eintritt am ${D.fmt(e.startDate)}"></div>`;
+      if (endIn) {
+        const i = D.diff(Y.start, e.endDate) + 1;
+        out += `<div class="tl-out" style="left:${i * col}px;width:${(Y.n - i) * col}px" title="Austritt am ${D.fmt(e.endDate)}"></div>`;
+      }
       let bars = '';
       S.absencesOf(e.id, Y.y).forEach((a) => {
         bars += this.barHtml(a, e, Y, col);
@@ -446,10 +457,10 @@
       return `<div class="tl-row" data-emp="${esc(e.id)}" style="--d:${rowNo}">
         <div class="tl-name ${e.active ? '' : 'inactive'}" data-action="edit-emp" data-emp="${esc(e.id)}" title="${esc(e.name)} bearbeiten">
           <span class="avatar" style="--c:${esc(g ? g.color : '#64748b')}">${esc(initials(e.name))}</span>
-          <span class="nm"><b>${esc(e.name)}</b><small>${esc(e.position || (g ? g.short : ''))} · ${fd(st.total)} T Anspruch${wdText}</small></span>
+          <span class="nm"><b>${esc(e.name)}</b><small>${esc(e.position || (g ? g.short : ''))}${tenure ? `${tenure} · ${fd(st.total)} T` : ` · ${fd(st.total)} T Anspruch${wdText}`}</small></span>
           <span class="rest ${restCls}" data-tipkind="rest" data-emp="${esc(e.id)}">${fd(st.rest)}<small>T</small></span>
         </div>
-        <div class="tl-lane" data-emp="${esc(e.id)}" style="width:${W}px">${bars}</div>
+        <div class="tl-lane" data-emp="${esc(e.id)}" style="width:${W}px">${out}${bars}</div>
       </div>`;
     },
 
@@ -602,6 +613,11 @@
         return;
       }
       const i = this.idxFromX(lane, e.clientX);
+      const dayIso = H.year().days[i].iso;
+      if (!UP.employedOn(dayIso, emp)) {
+        toast(emp.startDate && dayIso < emp.startDate ? `${emp.name} ist erst ab ${D.fmt(emp.startDate)} im Team.` : `${emp.name} ist seit ${D.fmt(emp.endDate)} nicht mehr im Team.`, { type: 'error' });
+        return;
+      }
       this.drag = { kind: 'select', emp, lane, a: i, b: i, x0: e.clientX, y0: e.clientY, moved: false, touch: e.pointerType === 'touch', pid: e.pointerId };
       if (this.drag.touch) return;
       e.preventDefault();
@@ -1109,7 +1125,7 @@
       const Y = H.year();
       const y = Y.y;
       const settings = d.settings;
-      const emps = d.employees.filter((e) => e.active || p.showInactive);
+      const emps = d.employees.filter((e) => (e.active || p.showInactive) && UP.employedIn(e, Y.y));
       const rows = emps.map((e, order) => ({ e, order, st: S.stats(e, y), g: S.group(e.group) }));
 
       // KPIs

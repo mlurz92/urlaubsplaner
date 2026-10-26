@@ -40,7 +40,7 @@ Ein Suchfeld für alles: Aktionen, Ansichten, Export, Einstellungen und Personen
 
 ### Arbeitstage und Urlaubskonten
 
-- Urlaubstage werden nur an **individuellen Arbeitstagen** der Person gezählt, ohne Wochenenden und Feiertage (Teilzeit wird über die Auswahl der Arbeitstage abgebildet).
+- Urlaubstage werden nur an **individuellen Arbeitstagen** der Person gezählt, ohne Wochenenden und Feiertage (Teilzeit wird über die Auswahl der Arbeitstage abgebildet) und nur innerhalb der Beschäftigung (Eintritt/Austritt).
 - Jahresanspruch je Person (Standard und abweichend pro Jahr) sowie **Übertrag aus dem Vorjahr** – der Resturlaub des Vorjahres lässt sich per Klick übernehmen.
 - Einstellbare Regel für 24.12./31.12.: ganzer Tag, halber Tag oder arbeitsfrei.
 - Nur Abwesenheitsarten mit „zählt als Urlaub“ werden vom Anspruch abgezogen (Krankheit, Fortbildung, Freizeitausgleich usw. nicht).
@@ -69,7 +69,9 @@ Anlegen, bearbeiten, sortieren, deaktivieren und löschen. Voreingestellt sind d
 
 | Fachärztinnen & Fachärzte | Assistenzärztinnen & Assistenzärzte |
 |---|---|
-| Prof. Schäfer, Dr. Lurz, Dr. Polednia, Fr. Dalitz, Dr. Becker, Dr. Hellmann, Dr. Martin | Fr. Licenji, Hr. Sebastian, Hr. Safari |
+| Prof. Schäfer, Dr. Lurz, Dr. Polednia, Fr. Dalitz, Dr. Becker, Dr. Hellmann, Dr. Martin | Fr. Licenji, Hr. Sebastian, Hr. Safari, Hr. Linke (ab 01.02.2027) |
+
+**Eintritt und Austritt:** Je Person lassen sich Eintritts- und Austrittsdatum hinterlegen. Die Person erscheint nur in den Jahren ihrer Beschäftigung; Tage davor bzw. danach sind schraffiert, zählen weder als Urlaubstage noch für die Besetzung und lassen sich nicht markieren. Der Jahresurlaub wird im Eintritts- bzw. Austrittsjahr automatisch anteilig berechnet (1/12 je vollem Monat, Bruchteile ab einem halben Tag aufgerundet, § 5 BUrlG) – z. B. Hr. Linke 2027: 11/12 × 30 = 27,5 → **28 Tage**. Ein abweichender Jahreswert im Personendialog hat Vorrang. Hr. Linke wird bei bestehenden Datenständen beim nächsten Öffnen einmalig automatisch ergänzt.
 
 ### Export, Import und Druck
 
